@@ -27,6 +27,14 @@ contract ABIEncoderDemo {
         poolId = keccak256(abi.encodePacked(token0, token1, fee));
     }
 
+    function createPoolIdentifier(address token, uint256 rewardRate, uint256 timestamp, uint256 chainId)
+        external
+        pure
+        returns (bytes32 poolId)
+    {
+        poolId = keccak256(abi.encodePacked(token, rewardRate, timestamp, chainId));
+    }
+
     /**
      * @dev Encodes data for a trading position
      * @param user User address
