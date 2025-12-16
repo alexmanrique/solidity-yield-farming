@@ -95,7 +95,7 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
         emit Staked(poolId, msg.sender, amount);
     }
 
-    function withDraw(bytes32 poolId, uint256 amount) external nonReentrant {
+    function withdraw(bytes32 poolId, uint256 amount) external nonReentrant {
         Pool storage pool = pools[poolId];
         UserInfo storage user = userInfo[poolId][msg.sender];
 

@@ -141,4 +141,43 @@ contract YieldFarmingPoolTest is Test {
         // Verificar que las recompensas se transfirieron
         assertGt(rewardToken.balanceOf(user1), 0);
     }
+
+    function testWithdraw() public {
+        uint256 stakeAmount = 1000 * 10 ** 18;
+        uint256 withdrawAmount = 500 * 10 ** 18;
+
+        uint256 rewardRate = 1e18;
+
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+
+        // Aprobar transferencia de tokens al contrato desde el usuario
+        vm.startPrank(user1);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        vm.stopPrank();
+
+        // Transferir tokens de recompensa al contrato para que pueda distribuirlos
+        uint256 rewardAmount = 10000 * 10 ** 18; // Suficientes tokens para las recompensas
+        bool success = rewardToken.transfer(address(yieldFarmingPool), rewardAmount);
+        require(success, "Reward token transfer failed");
+
+        success = stakingToken1.transfer(user1, 10000 * 10 ** 18);
+        require(success, "Transfer failed");
+
+        vm.startPrank(user1);
+        yieldFarmingPool.stake(poolId1, stakeAmount);
+
+        // Avanzar tiempo para generar recompensas
+        vm.warp(block.timestamp + 100);
+
+        yieldFarmingPool.withdraw(poolId1, withdrawAmount);
+        vm.stopPrank();
+
+        // Verificar que el withdraw se procesó correctamente
+        (uint256 amount,,) = yieldFarmingPool.userInfo(poolId1, user1);
+        (, uint256 totalStaked,,,,) = yieldFarmingPool.pools(poolId1);
+
+        assertEq(amount, stakeAmount - withdrawAmount);
+        assertEq(totalStaked, stakeAmount - withdrawAmount);
+        assertEq(stakingToken1.balanceOf(user1), 9000 * 10 ** 18 + withdrawAmount);
+    }
 }
