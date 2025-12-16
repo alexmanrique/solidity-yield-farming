@@ -19,7 +19,6 @@ contract MockTokenTest is Test {
         assertEq(mockToken.balanceOf(user1), amount);
     }
 
-    
     function testBurn() public {
         mockToken.mint(user1, amount);
         vm.startPrank(user1);
