@@ -226,4 +226,18 @@ contract YieldFarmingPoolTest is Test {
         // User2 debería tener más recompensas por tener más tokens staked
         assertGt(pending2, pending1);
     }
+
+    function testGetPoolEncodedData() public {
+        uint256 rewardRate = 1e18;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+        // Obtener datos codificados del pool
+        bytes memory encodedData = yieldFarmingPool.getPoolEncodedData(poolId1);
+        
+        // Verificar que los datos están codificados
+        assertGt(encodedData.length, 0);
+        
+        // Los datos codificados deberían contener información del pool
+        // Como no podemos decodificar directamente, verificamos que no esté vacío
+        assertTrue(encodedData.length > 0);
+    }
 }
