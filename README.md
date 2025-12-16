@@ -1,66 +1,68 @@
-## Foundry
+## Yield Farming Pool
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+The `YieldFarmingPool` contract is a yield farming protocol that allows users to stake tokens and earn rewards. It implements a multi-pool system where each pool can have different staking tokens and reward rates.
 
-Foundry consists of:
+### Features
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **Multi-Pool Support**: Create multiple staking pools with different tokens and reward rates
+- **Staking**: Users can stake tokens into active pools
+- **Rewards**: Automatic reward calculation based on staked amount and time
+- **Withdrawal**: Users can withdraw their staked tokens at any time
+- **Reward Claiming**: Users can claim accumulated rewards separately from staking/withdrawal
+- **Pool Management**: Owner can create pools, update reward rates, and perform emergency withdrawals
 
-## Documentation
+### Key Functions
 
-https://book.getfoundry.sh/
+#### For Users
 
-## Usage
+- **`stake(bytes32 poolId, uint256 amount)`**: Stake tokens into a pool. Automatically claims pending rewards before staking.
+- **`withdraw(bytes32 poolId, uint256 amount)`**: Withdraw staked tokens from a pool. Automatically claims pending rewards before withdrawal.
+- **`claimRewards(bytes32 poolId)`**: Claim accumulated rewards without withdrawing staked tokens.
+- **`pendingRewards(bytes32 poolId, address user)`**: View function to check pending rewards for a user.
 
-### Build
+#### For Owner
 
-```shell
-$ forge build
-```
+- **`createPool(address token_, uint256 rewardRate)`**: Create a new staking pool with a specific token and reward rate.
+- **`updatePoolRewardRate(bytes32 poolId, uint256 newRewardRate)`**: Update the reward rate for an existing pool.
+- **`emergencyWithdraw(address token, uint256 amount)`**: Emergency function to withdraw tokens from the contract.
 
-### Test
+#### View Functions
 
-```shell
-$ forge test
-```
+- **`getActivePools()`**: Get list of all active pool IDs.
+- **`getActivePoolsCount()`**: Get the count of active pools.
+- **`getPoolEncodedData(bytes32 poolId)`**: Get encoded pool data.
+- **`getUserHash(bytes32 poolId, address user)`**: Get user hash for a specific pool.
 
-### Format
+### Security Features
 
-```shell
-$ forge fmt
-```
+- **ReentrancyGuard**: Protects against reentrancy attacks
+- **Ownable**: Access control for owner-only functions
+- **SafeERC20**: Safe token transfer operations
+- **Reward Debt System**: Prevents reward manipulation using a reward debt tracking mechanism
 
-### Gas Snapshots
+### Pool Structure
 
-```shell
-$ forge snapshot
-```
+Each pool contains:
 
-### Anvil
+- `token`: The ERC20 token address that can be staked
+- `totalStaked`: Total amount of tokens staked in the pool
+- `rewardRate`: Reward rate per second
+- `lastUpdate`: Timestamp of last pool update
+- `rewardPerTokenStored`: Accumulated rewards per token (scaled by 1e18)
+- `isActive`: Whether the pool is currently active
 
-```shell
-$ anvil
-```
+### User Information
 
-### Deploy
+For each user in each pool, the contract tracks:
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+- `amount`: Amount of tokens staked by the user
+- `rewardDebt`: Reward debt to prevent double-claiming
+- `lastClaimTime`: Timestamp of last reward claim
 
-### Cast
+### Events
 
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+- `PoolCreated`: Emitted when a new pool is created
+- `Staked`: Emitted when a user stakes tokens
+- `Withdrawn`: Emitted when a user withdraws tokens
+- `RewardClaimed`: Emitted when rewards are claimed
+- `PoolUpdated`: Emitted when a pool's reward rate is updated
