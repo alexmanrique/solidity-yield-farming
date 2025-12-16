@@ -232,31 +232,28 @@ contract YieldFarmingPoolTest is Test {
         bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
         // Obtener datos codificados del pool
         bytes memory encodedData = yieldFarmingPool.getPoolEncodedData(poolId1);
-        
+
         // Verificar que los datos están codificados
         assertGt(encodedData.length, 0);
-        
+
         // Los datos codificados deberían contener información del pool
         // Como no podemos decodificar directamente, verificamos que no esté vacío
         assertTrue(encodedData.length > 0);
     }
 
     function testGetUserHash() public {
-
         uint256 rewardRate = 1e18;
         bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
         bytes32 poolId2 = yieldFarmingPool.createPool(address(stakingToken2), rewardRate);
         // Crear hash único para el usuario
         bytes32 userHash = yieldFarmingPool.getUserHash(poolId1, user1);
-        
+
         // Verificar que el hash es único
         bytes32 userHash2 = yieldFarmingPool.getUserHash(poolId1, user2);
         assertTrue(userHash != userHash2);
-        
+
         // Verificar que el mismo usuario en diferentes pools tiene diferentes hashes
         bytes32 userHashPool2 = yieldFarmingPool.getUserHash(poolId2, user1);
         assertTrue(userHash != userHashPool2);
     }
-
-
 }
