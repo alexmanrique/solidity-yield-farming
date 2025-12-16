@@ -128,7 +128,7 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
         emit RewardClaimed(poolId, msg.sender, pending);
     }
 
-       /**
+    /**
      * @dev Calculate the pending rewards of a user
      * @param poolId Pool identifier
      * @param user User address
@@ -137,15 +137,15 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
     function pendingRewards(bytes32 poolId, address user) external view returns (uint256) {
         Pool storage pool = pools[poolId];
         UserInfo storage userInfoData = userInfo[poolId][user];
-        
+
         uint256 rewardPerTokenStored = pool.rewardPerTokenStored;
-        
+
         if (pool.totalStaked > 0) {
             uint256 timeElapsed = block.timestamp - pool.lastUpdate;
             uint256 rewards = timeElapsed * pool.rewardRate;
             rewardPerTokenStored += rewards * 1e18 / pool.totalStaked;
         }
-        
+
         return userInfoData.amount * rewardPerTokenStored / 1e18 - userInfoData.rewardDebt;
     }
 
