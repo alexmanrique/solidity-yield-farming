@@ -99,7 +99,7 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
         Pool storage pool = pools[poolId];
         UserInfo storage user = userInfo[poolId][msg.sender];
 
-        require(user.amount > amount, "Insuficient staked amount");
+        require(user.amount > amount, "Insufficient staked amount");
 
         _updatePool(poolId);
         uint256 pending = _calculatePendingRewards(poolId, msg.sender);

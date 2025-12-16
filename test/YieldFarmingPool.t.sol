@@ -280,4 +280,21 @@ contract YieldFarmingPoolTest is Test {
         uint256 balanceAfter = stakingToken1.balanceOf(address(this));
         assertEq(balanceAfter, balanceBefore + 1000 * 10 ** 18);
     }
+
+    function testRevertWhenWithdrawMoreThanStaked() public {
+        uint256 stakeAmount = 1000 * 10 ** 18;
+
+        uint256 rewardRate = 1e18;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+        bool success = stakingToken1.transfer(user1, 10000 * 10 ** 18);
+        require(success, "Transfer failed");
+
+        vm.startPrank(user1);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        yieldFarmingPool.stake(poolId1, stakeAmount);
+
+        vm.expectRevert("Insufficient staked amount");
+        yieldFarmingPool.withdraw(poolId1, stakeAmount + 1);
+        vm.stopPrank();
+    }
 }
