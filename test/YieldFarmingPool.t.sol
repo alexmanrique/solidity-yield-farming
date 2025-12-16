@@ -9,14 +9,19 @@ import {ABIEncoderDemo} from "../src/ABIEncoderDemo.sol";
 contract YieldFarmingPoolTest is Test {
     YieldFarmingPool public yieldFarmingPool;
     MockToken public rewardToken;
+    MockToken public stakingToken1;
+    MockToken public stakingToken2;
     address public user1;
     address public user2;
 
     function setUp() public {
         rewardToken = new MockToken("Reward Token", "RT", 1000000000000000000000000);
+        stakingToken1 = new MockToken("Staking Token 1", "ST1", 1000000000000000000000000);
+        stakingToken2 = new MockToken("Staking Token 2", "ST2", 1000000000000000000000000);
         yieldFarmingPool = new YieldFarmingPool(address(rewardToken), new ABIEncoderDemo());
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
+        
     }
 
     function testCreatePoolSuccess() public {
@@ -62,4 +67,57 @@ contract YieldFarmingPoolTest is Test {
         vm.expectRevert("Pool already exists");
         yieldFarmingPool.createPool(address(rewardToken), rewardRate);
     }
+
+    function testPoolIdUniqueness() public {
+        uint256 rewardRate = 1e18;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(rewardToken), rewardRate);   
+        bytes32 poolId2 = yieldFarmingPool.createPool(address(rewardToken), rewardRate*2);
+        assertTrue(poolId1 != poolId2);
+        
+        vm.warp(block.timestamp + 1);
+        bytes32 poolId3 = yieldFarmingPool.createPool(address(rewardToken), rewardRate);
+        
+        assertTrue(poolId1 != poolId3);
+    }
+
+    function testStake() public {
+        uint256 stakeAmount = 1000 * 10**18;
+        uint256 rewardRate = 1e18;
+
+        stakingToken1.transfer(user1, 10000 * 10**18);
+        
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate); 
+
+        vm.startPrank(user1);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        stakingToken2.approve(address(yieldFarmingPool), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        yieldFarmingPool.stake(poolId1, stakeAmount);
+        vm.stopPrank();
+        
+        // Verificar que el stake se registró correctamente
+        (uint256 amount, , ) = yieldFarmingPool.userInfo(poolId1, user1);
+        (, uint256 totalStaked, , , , ) = yieldFarmingPool.pools(poolId1);
+        
+        assertEq(amount, stakeAmount);
+        assertEq(totalStaked, stakeAmount);
+    }
+
+    
+
+    
+
+    /*function testStakeFailureWhenPoolIsNotActive() public {
+        uint256 rewardRate = 1e18;
+        bytes32 poolId = yieldFarmingPool.createPool(address(rewardToken), rewardRate);
+        (address token, uint256 totalStaked, uint256 poolRewardRate, uint256 lastUpdate, uint256 rewardPerTokenStored, bool isActive) = yieldFarmingPool.pools(poolId);
+        isActive = false;
+        yieldFarmingPool.pools[poolId] = (token, totalStaked, poolRewardRate, lastUpdate, rewardPerTokenStored, isActive);
+        vm.expectRevert("Pool is not active");
+        yieldFarmingPool.stake(poolId, 1e18);
+    }*/
+    
+    
 }
