@@ -256,4 +256,14 @@ contract YieldFarmingPoolTest is Test {
         bytes32 userHashPool2 = yieldFarmingPool.getUserHash(poolId2, user1);
         assertTrue(userHash != userHashPool2);
     }
+
+    function testUpdatePoolRewardRate() public {
+        uint256 rewardRate = 1e18;
+        uint256 newRewardRate = rewardRate * 2;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+        yieldFarmingPool.updatePoolRewardRate(poolId1, newRewardRate);
+
+        (,, uint256 rewardRateResult,,,) = yieldFarmingPool.pools(poolId1);
+        assertEq(rewardRateResult, newRewardRate);
+    }
 }
