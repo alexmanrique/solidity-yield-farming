@@ -180,4 +180,50 @@ contract YieldFarmingPoolTest is Test {
         assertEq(totalStaked, stakeAmount - withdrawAmount);
         assertEq(stakingToken1.balanceOf(user1), 9000 * 10 ** 18 + withdrawAmount);
     }
+
+    function testMultipleUsers() public {
+        uint256 stakeAmount1 = 1000 * 10 ** 18;
+        uint256 stakeAmount2 = 2000 * 10 ** 18;
+        uint256 rewardRate = 1e18;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+
+        bool success = stakingToken1.transfer(user1, 10000 * 10 ** 18);
+        require(success, "Transfer failed");
+
+        success = stakingToken1.transfer(user2, 10000 * 10 ** 18);
+        require(success, "Transfer failed");
+
+        vm.startPrank(user1);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        vm.stopPrank();
+
+        // User1 stake en pool1
+        vm.startPrank(user1);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        yieldFarmingPool.stake(poolId1, stakeAmount1);
+        vm.stopPrank();
+
+        // User2 stake en pool1
+        vm.startPrank(user2);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        yieldFarmingPool.stake(poolId1, stakeAmount2);
+        vm.stopPrank();
+
+        // Avanzar tiempo
+        vm.warp(block.timestamp + 100);
+
+        // Verificar que ambos usuarios tienen recompensas
+        uint256 pending1 = yieldFarmingPool.pendingRewards(poolId1, user1);
+        uint256 pending2 = yieldFarmingPool.pendingRewards(poolId1, user2);
+
+        assertGt(pending1, 0);
+        assertGt(pending2, 0);
+
+        // User2 debería tener más recompensas por tener más tokens staked
+        assertGt(pending2, pending1);
+    }
 }
