@@ -266,4 +266,18 @@ contract YieldFarmingPoolTest is Test {
         (,, uint256 rewardRateResult,,,) = yieldFarmingPool.pools(poolId1);
         assertEq(rewardRateResult, newRewardRate);
     }
+
+    function testEmergencyWithdraw() public {
+        // Transferir tokens al contrato para probar emergency withdraw
+        bool success = stakingToken1.transfer(address(yieldFarmingPool), 1000 * 10 ** 18);
+        require(success, "Transfer failed");
+
+        // El contrato de test es el owner del YieldFarmingPool, así que podemos llamar directamente
+        uint256 balanceBefore = stakingToken1.balanceOf(address(this));
+
+        yieldFarmingPool.emergencyWithdraw(address(stakingToken1), 1000 * 10 ** 18);
+
+        uint256 balanceAfter = stakingToken1.balanceOf(address(this));
+        assertEq(balanceAfter, balanceBefore + 1000 * 10 ** 18);
+    }
 }

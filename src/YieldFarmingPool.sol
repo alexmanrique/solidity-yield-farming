@@ -182,7 +182,7 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
         return activePools;
     }
 
-    function emergencyWithDraw(address token, uint256 amount) external onlyOwner {
+    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
         IERC20(token).safeTransfer(owner(), amount);
     }
 
