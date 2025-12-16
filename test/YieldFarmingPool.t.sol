@@ -286,6 +286,7 @@ contract YieldFarmingPoolTest is Test {
 
         uint256 rewardRate = 1e18;
         bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+
         bool success = stakingToken1.transfer(user1, 10000 * 10 ** 18);
         require(success, "Transfer failed");
 
@@ -296,5 +297,27 @@ contract YieldFarmingPoolTest is Test {
         vm.expectRevert("Insufficient staked amount");
         yieldFarmingPool.withdraw(poolId1, stakeAmount + 1);
         vm.stopPrank();
+    }
+
+    function testRevertWhenClaimNoRewards() public {
+        uint256 rewardRate = 1e18;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+        vm.startPrank(user1);
+        vm.expectRevert("no rewards to claim");
+        yieldFarmingPool.claimRewards(poolId1);
+        vm.stopPrank();
+    }
+
+    function testGetActivePools() public {
+        uint256 rewardRate = 1e18;
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate);
+        bytes32 poolId2 = yieldFarmingPool.createPool(address(stakingToken2), rewardRate);
+
+        bytes32[] memory activePools = yieldFarmingPool.getActivePools();
+        assertEq(activePools.length, 2);
+        assertEq(activePools[0], poolId1);
+        assertEq(activePools[1], poolId2);
+
+        assertEq(yieldFarmingPool.getActivePoolsCount(), 2);
     }
 }
