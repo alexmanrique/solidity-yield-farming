@@ -25,7 +25,7 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
         uint256 lastClaimTime;
     }
 
-    IERC20 public immutable rewardToken;
+    IERC20 public immutable REWARD_TOKEN;
 
     mapping(bytes32 => Pool) public pools;
 
@@ -44,7 +44,7 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
 
     constructor(address rewardToken_, ABIEncoderDemo abiEncoderDemo_) Ownable(msg.sender) {
         require(rewardToken_ != address(0), "Invalid reward token");
-        rewardToken = IERC20(rewardToken_);
+        REWARD_TOKEN = IERC20(rewardToken_);
         abiEncoderDemo = abiEncoderDemo_;
     }
 
@@ -85,7 +85,8 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
             }
         }
 
-        IERC20(pool.token).transferFrom(msg.sender, address(this), amount);
+        bool success = IERC20(pool.token).transferFrom(msg.sender, address(this), amount);
+        require(success, "Transfer failed");
 
         user.amount += amount;
         user.rewardDebt = user.amount * pool.rewardPerTokenStored / 1e18;
@@ -125,6 +126,27 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
         _safeRewardsTransfer(msg.sender, pending);
 
         emit RewardClaimed(poolId, msg.sender, pending);
+    }
+
+       /**
+     * @dev Calculate the pending rewards of a user
+     * @param poolId Pool identifier
+     * @param user User address
+     * @return Amount of pending rewards
+     */
+    function pendingRewards(bytes32 poolId, address user) external view returns (uint256) {
+        Pool storage pool = pools[poolId];
+        UserInfo storage userInfoData = userInfo[poolId][user];
+        
+        uint256 rewardPerTokenStored = pool.rewardPerTokenStored;
+        
+        if (pool.totalStaked > 0) {
+            uint256 timeElapsed = block.timestamp - pool.lastUpdate;
+            uint256 rewards = timeElapsed * pool.rewardRate;
+            rewardPerTokenStored += rewards * 1e18 / pool.totalStaked;
+        }
+        
+        return userInfoData.amount * rewardPerTokenStored / 1e18 - userInfoData.rewardDebt;
     }
 
     /**
@@ -185,12 +207,12 @@ contract YieldFarmingPool is Ownable, ReentrancyGuard {
      *
      */
     function _safeRewardsTransfer(address to, uint256 amount) internal {
-        uint256 rewardBalance = rewardToken.balanceOf(address(this));
+        uint256 rewardBalance = REWARD_TOKEN.balanceOf(address(this));
         if (amount > rewardBalance) {
             amount = rewardBalance;
         }
         if (amount > 0) {
-            rewardToken.safeTransfer(to, amount);
+            REWARD_TOKEN.safeTransfer(to, amount);
         }
     }
 

@@ -84,7 +84,8 @@ contract YieldFarmingPoolTest is Test {
         uint256 stakeAmount = 1000 * 10**18;
         uint256 rewardRate = 1e18;
 
-        stakingToken1.transfer(user1, 10000 * 10**18);
+        bool success = stakingToken1.transfer(user1, 10000 * 10**18);
+        require(success, "Transfer failed");
         
         bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate); 
 
@@ -105,19 +106,42 @@ contract YieldFarmingPoolTest is Test {
         assertEq(totalStaked, stakeAmount);
     }
 
-    
 
-    
-
-    /*function testStakeFailureWhenPoolIsNotActive() public {
+     function testStakeAndRewards() public {
+        uint256 stakeAmount = 1000 * 10**18;
         uint256 rewardRate = 1e18;
-        bytes32 poolId = yieldFarmingPool.createPool(address(rewardToken), rewardRate);
-        (address token, uint256 totalStaked, uint256 poolRewardRate, uint256 lastUpdate, uint256 rewardPerTokenStored, bool isActive) = yieldFarmingPool.pools(poolId);
-        isActive = false;
-        yieldFarmingPool.pools[poolId] = (token, totalStaked, poolRewardRate, lastUpdate, rewardPerTokenStored, isActive);
-        vm.expectRevert("Pool is not active");
-        yieldFarmingPool.stake(poolId, 1e18);
-    }*/
-    
+        bytes32 poolId1 = yieldFarmingPool.createPool(address(stakingToken1), rewardRate); 
+        
+        bool success = stakingToken1.transfer(user1, 10000 * 10**18);
+        require(success, "Transfer failed");
+
+        // Transferir tokens de recompensa al contrato para que pueda distribuirlos
+        uint256 rewardAmount = 10000 * 10**18; // Suficientes tokens para las recompensas
+        success = rewardToken.transfer(address(yieldFarmingPool), rewardAmount);
+        require(success, "Reward token transfer failed");
+
+        vm.startPrank(user1);
+        stakingToken1.approve(address(yieldFarmingPool), type(uint256).max);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        yieldFarmingPool.stake(poolId1, stakeAmount);
+        vm.stopPrank();
+        
+        // Avanzar tiempo para generar recompensas
+        vm.warp(block.timestamp + 100);
+        
+        // Verificar recompensas pendientes
+        uint256 pendingRewards = yieldFarmingPool.pendingRewards(poolId1, user1);
+        assertGt(pendingRewards, 0);
+        
+        // Reclamar recompensas
+        vm.startPrank(user1);
+        yieldFarmingPool.claimRewards(poolId1);
+        vm.stopPrank();
+        
+        // Verificar que las recompensas se transfirieron
+        assertGt(rewardToken.balanceOf(user1), 0);
+    }
     
 }
