@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "../lib/forge-std/src/Test.sol";
 import {YieldFarmingPool} from "../src/YieldFarmingPool.sol";
 import {MockToken} from "../src/MockToken.sol";
 import {ABIEncoderDemo} from "../src/ABIEncoderDemo.sol";
